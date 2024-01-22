@@ -1,7 +1,9 @@
+import 'dotenv/config';
 import type { Context } from "@netlify/functions"
+import Airtable from 'airtable';
 
 export default async (req: Request, context: Context) => {
-  const headers = (process.env.NETLIFY_DEV) ? {
+  const headers = (process.env.DEVMODE) ? {
     "access-control-allow-origin": "http://localhost:8080",
   }: {
     "access-control-allow-origin": "https://pouch.cafe",
@@ -13,6 +15,10 @@ export default async (req: Request, context: Context) => {
     msg: "hi hello world",
     received: json
   };
+
+  console.log('hello here')
+  console.log(process.env.AIRTABLE_TOKEN);
+  await addToAirtable();
   
   return new Response(
     JSON.stringify(response),
@@ -22,3 +28,19 @@ export default async (req: Request, context: Context) => {
   )
 }
 
+async function addToAirtable() {
+  const base = new Airtable({apiKey: process.env.AIRTABLE_TOKEN}).base('app0lWi3PvS2b7m6v');
+  try {
+    const record = base('submissions').create({
+      'Name': 'vrk',
+      'Email': 'victoriakirst@gmail.com',
+      'Journal Layout': [{ 'url': 'https://pouch.cafe/images/cover.png' } as any],
+      'Description': "doing goood!",
+      'Stationery Used': 'ya',
+      'Social': 'hiii'
+    });
+    console.log(record);
+  } catch (error) {
+    console.error('error adding to airtable', error);
+  }
+}
