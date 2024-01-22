@@ -12,7 +12,7 @@ export default async (req: Request, context: Context) => {
     JSON.stringify(response),
     {
       headers: {
-        "access-control-allow-origin": "*",
+        "access-control-allow-origin": "https://pouch.cafe",
       }
     }
   )
