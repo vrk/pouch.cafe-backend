@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import type { Context } from "@netlify/functions"
 import Airtable from 'airtable';
-import {v2 as cloudinary} from 'cloudinary';
+import {UploadApiResponse, v2 as cloudinary} from 'cloudinary';
           
 cloudinary.config({ 
   cloud_name: process.env.CLOUDINARY_NAME,
@@ -16,16 +16,22 @@ export default async (req: Request, context: Context) => {
     "access-control-allow-origin": "https://pouch.cafe",
   };
   
-  const json = await req.json();
-  console.log(json);
+  console.log(headers);
+  // const json = await req.json();
+  const formData = await req.formData();
+  console.log(formData);
+  const layoutBlob = formData.get('journallayout') as Blob;
   const response = {
     msg: "hi hello world",
-    received: json
+    // received: json
   };
 
   console.log('hello here')
   console.log(process.env.AIRTABLE_TOKEN);
-  await addToAirtable();
+  const arrayBuffer = await layoutBlob.arrayBuffer();
+  const result = await uploadToCloudinary(arrayBuffer);
+  console.log(result?.url);
+  await addToAirtable(result?.url);
   
   return new Response(
     JSON.stringify(response),
@@ -35,22 +41,30 @@ export default async (req: Request, context: Context) => {
   )
 }
 
-async function uploadToCloudinary() {
-  
+async function uploadToCloudinary(byteArrayBuffer: ArrayBuffer): Promise<UploadApiResponse|undefined> {
+  const nodeBuffer = Buffer.from(byteArrayBuffer);
+  return new Promise((resolve) => {
+      cloudinary.uploader.upload_stream((error, uploadResult) => {
+          return resolve(uploadResult);
+      }).end(nodeBuffer);
+  });
 }
 
-async function addToAirtable() {
+async function addToAirtable(journalLayoutUrl) {
   const base = new Airtable({apiKey: process.env.AIRTABLE_TOKEN}).base('app0lWi3PvS2b7m6v');
+  const newRecord = {
+    'Name': 'vrk',
+    'Email': 'victoriakirst@gmail.com',
+    'Description': "doing goood!",
+    'Stationery Used': 'ya',
+    'Social': 'hiii'
+  };
+  if (journalLayoutUrl) {
+    newRecord['Journal Layout'] = [{ 'url': journalLayoutUrl } as any]
+  }
   try {
-    const record = base('submissions').create({
-      'Name': 'vrk',
-      'Email': 'victoriakirst@gmail.com',
-      'Journal Layout': [{ 'url': 'https://pouch.cafe/images/cover.png' } as any],
-      'Description': "doing goood!",
-      'Stationery Used': 'ya',
-      'Social': 'hiii'
-    });
-    console.log(record);
+    const recorded = base('submissions').create(newRecord);
+    console.log(recorded);
   } catch (error) {
     console.error('error adding to airtable', error);
   }
