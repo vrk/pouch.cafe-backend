@@ -10,5 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "@netlify/functions": "^2.5.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5"
   }
 }
