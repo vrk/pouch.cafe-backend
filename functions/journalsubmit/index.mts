@@ -1,6 +1,13 @@
 import 'dotenv/config';
 import type { Context } from "@netlify/functions"
 import Airtable from 'airtable';
+import {v2 as cloudinary} from 'cloudinary';
+          
+cloudinary.config({ 
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET 
+});
 
 export default async (req: Request, context: Context) => {
   const headers = (process.env.DEVMODE) ? {
@@ -26,6 +33,10 @@ export default async (req: Request, context: Context) => {
       headers
     }
   )
+}
+
+async function uploadToCloudinary() {
+  
 }
 
 async function addToAirtable() {
