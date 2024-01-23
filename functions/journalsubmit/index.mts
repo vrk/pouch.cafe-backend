@@ -3,7 +3,7 @@ import type { Context } from "@netlify/functions"
 import Airtable from 'airtable';
 import {UploadApiResponse, v2 as cloudinary} from 'cloudinary';
 
-const MAX_FILE_SIZE_IN_BYTES = 10000000; // 10 mb
+const MAX_FILE_SIZE_IN_BYTES = 10 * 1000000; // 10 mb
 
 const ERROR_BODY_MISSING_PARAM = JSON.stringify({error: "missingparam"});
 const ERROR_BODY_INVALID_PARAM = JSON.stringify({error: "invalidparam"});
@@ -49,7 +49,7 @@ export default async (req: Request) => {
   }
 
   try {
-    const record = await addToAirtable(journalLayoutUrl);
+    const record = await addToAirtable(journalLayoutUrl, formData);
     console.log(record);
     return new Response(
       SUCCESS,
@@ -72,14 +72,29 @@ async function uploadToCloudinary(byteArrayBuffer: ArrayBuffer): Promise<UploadA
   });
 }
 
-async function addToAirtable(journalLayoutUrl: string) {
+async function addToAirtable(journalLayoutUrl: string, formData: FormData) {
   const base = new Airtable({apiKey: process.env.AIRTABLE_TOKEN}).base('app0lWi3PvS2b7m6v');
+  // lol so messy
+  const name = formData.get('name') as string | null;
+  const email = formData.get('email') as string | null;
+  const desc = formData.get('layoutdescription') as string | null || '';
+  const social = formData.get('socialmedia') as string | null || '';
+
+  if (!name || name.trim().length === 0) {
+    throw new Error(`Name ${name} is invalid`);
+  }
+  const emailRegExp =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+
+  if (!email || email.trim().length === 0 || !emailRegExp.test(email)) {
+    throw new Error(`Email ${email} is invalid`);
+  }
+
   const newRecord = {
-    'Name': 'vrk',
-    'Email': 'victoriakirst@gmail.com',
-    'Description': "doing goood!",
-    'Stationery Used': 'ya',
-    'Social': 'hiii'
+    'Name': name,
+    'Email': email,
+    'Description': desc,
+    'Social': social
   };
   if (journalLayoutUrl) {
     newRecord['Journal Layout'] = [{ 'url': journalLayoutUrl } as any]
