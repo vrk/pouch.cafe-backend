@@ -30,27 +30,31 @@ export default async (req: Request) => {
 
   const layoutBlob = formData.get('journallayout') as Blob;
   if (!layoutBlob) {
+    console.error('The layout image was missing from form data')
     return new Response(ERROR_BODY_MISSING_PARAM, { status: 400, headers})
   }
 
   const arrayBuffer = await layoutBlob.arrayBuffer();
   if (!arrayBuffer) {
+    console.error('Could not make an array buffer')
     return new Response(ERROR_BODY_INVALID_PARAM, { status: 400, headers })
   }
 
   if (arrayBuffer.byteLength > MAX_FILE_SIZE_IN_BYTES) {
+    console.error(`The file is too large at ${arrayBuffer.byteLength} bytes`);
     return new Response(ERROR_BODY_FILE_TOO_LARGE, { status: 400, headers})
   }
 
   const result = await uploadToCloudinary(arrayBuffer);
   const journalLayoutUrl = result?.url;
   if (!journalLayoutUrl) {
+    console.error(`Cloudinary did not return a URL`, result);
     return new Response(ERROR_BODY_CLOUDINARY_FAIL, { status: 400, headers })
   }
 
   try {
     const record = await addToAirtable(journalLayoutUrl, formData);
-    console.log(record);
+    console.log('successful record:', record);
     return new Response(
       SUCCESS,
       {
@@ -58,7 +62,7 @@ export default async (req: Request) => {
       }
     )
   } catch (error) {
-    console.error(error);
+    console.error('airtable failure', error);
     return new Response(ERROR_BODY_AIRTABLE_FAIL, { status: 200, headers} )
   }
 }
