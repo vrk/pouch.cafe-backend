@@ -1,7 +1,8 @@
 import 'dotenv/config';
-import type { Context } from "@netlify/functions"
+import type { Handler } from "@netlify/functions";
 import Airtable from 'airtable';
 import {UploadApiResponse, v2 as cloudinary} from 'cloudinary';
+import fetch from "node-fetch";
 
 const MAX_FILE_SIZE_IN_BYTES = 5 * 1000000; // 5 mb
 
@@ -107,3 +108,34 @@ async function addToAirtable(journalLayoutUrl: string, formData: FormData) {
   }
   return base('submissions').create(newRecord);
 }
+
+
+
+
+const sendSuccessEmail = async function(email, name, social, description, image, filename) {
+  return fetch(`${process.env.URL}/.netlify/functions/emails/journalsubmit`, {
+    headers: {
+      "netlify-emails-secret": process.env.NETLIFY_EMAILS_SECRET as string,
+    },
+    method: "POST",
+    body: JSON.stringify({
+      from: 'hello@pouch.cafe',
+      to: email,
+      subject: "Thanks for submitting to Pouch",
+      parameters: {
+        name,
+        email,
+        social,
+        description
+      },
+      attachments: [
+        {
+        content: image,
+        filename,
+      }
+    ],
+    }),
+  });
+};
+
+
