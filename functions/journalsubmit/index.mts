@@ -3,6 +3,7 @@ import type { Handler } from "@netlify/functions";
 import Airtable from 'airtable';
 import {UploadApiResponse, v2 as cloudinary} from 'cloudinary';
 import fetch from "node-fetch";
+import path from 'path';
 
 const MAX_FILE_SIZE_IN_BYTES = 5 * 1000000; // 5 mb
 
@@ -14,13 +15,13 @@ const ERROR_BODY_AIRTABLE_FAIL = JSON.stringify({error: "airtable"});
 const SUCCESS = JSON.stringify({message: "success"});
 
 cloudinary.config({ 
-  cloud_name: process.env.CLOUDINARY_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_SECRET 
+cloud_name: process.env.CLOUDINARY_NAME,
+api_key: process.env.CLOUDINARY_API_KEY,
+api_secret: process.env.CLOUDINARY_SECRET 
 });
 
 const headers = (process.env.DEVMODE) ? {
-  "access-control-allow-origin": "http://localhost:8080",
+"access-control-allow-origin": "http://localhost:8080",
 }: {
   "access-control-allow-origin": "https://pouch.cafe",
 };
@@ -64,7 +65,7 @@ export default async (req: Request) => {
     const social = formData.get('socialmedia') as string | null || '';
     const fileString = Buffer.from(arrayBuffer).toString('base64')
     
-    const filename = result?.original_filename || "layout";
+    const filename = getFileNameFromUrl(journalLayoutUrl);
     await sendSuccessEmail(email, name, social, desc, fileString, filename);
 
     return new Response(
@@ -124,7 +125,7 @@ async function addToAirtable(journalLayoutUrl: string, formData: FormData) {
 
 
 const sendSuccessEmail = async function(email, name, social, description, image, filename) {
-  return fetch(`${process.env.URL}/.netlify/functions/emails/journalsubmit`, {
+  return fetch(`${process.env.URL}/.netlify/functions/emails/journalsuccess`, {
     headers: {
       "netlify-emails-secret": process.env.NETLIFY_EMAILS_SECRET as string,
     },
@@ -150,3 +151,7 @@ const sendSuccessEmail = async function(email, name, social, description, image,
 };
 
 
+function getFileNameFromUrl(urlString: string) {
+  const parsed = new URL(urlString);
+  return path.basename(parsed.pathname);
+}
