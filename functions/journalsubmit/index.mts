@@ -56,6 +56,17 @@ export default async (req: Request) => {
   try {
     const record = await addToAirtable(journalLayoutUrl, formData);
     console.info(`record ${record.id} was saved successfully`);
+
+    // UGLY
+    const name = formData.get('name') as string | null;
+    const email = formData.get('email') as string | null;
+    const desc = formData.get('layoutdescription') as string | null || '';
+    const social = formData.get('socialmedia') as string | null || '';
+    const fileString = Buffer.from(arrayBuffer).toString('base64')
+    
+    const filename = result?.original_filename || "layout";
+    await sendSuccessEmail(email, name, social, desc, fileString, filename);
+
     return new Response(
       SUCCESS,
       {
