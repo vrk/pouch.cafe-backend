@@ -24,7 +24,7 @@ const headers = (process.env.DEVMODE) ? {
   "access-control-allow-origin": "https://pouch.cafe",
 };
 
-export default async (req: Request, context: Context) => {
+export default async (req: Request) => {
   const formData = await req.formData();
   console.log(formData);
 
@@ -67,12 +67,12 @@ async function uploadToCloudinary(byteArrayBuffer: ArrayBuffer): Promise<UploadA
   const nodeBuffer = Buffer.from(byteArrayBuffer);
   return new Promise((resolve) => {
       cloudinary.uploader.upload_stream((error, uploadResult) => {
-          return resolve(uploadResult);
+        return resolve(uploadResult);
       }).end(nodeBuffer);
   });
 }
 
-async function addToAirtable(journalLayoutUrl) {
+async function addToAirtable(journalLayoutUrl: string) {
   const base = new Airtable({apiKey: process.env.AIRTABLE_TOKEN}).base('app0lWi3PvS2b7m6v');
   const newRecord = {
     'Name': 'vrk',
