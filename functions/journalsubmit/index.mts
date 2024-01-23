@@ -3,7 +3,7 @@ import type { Context } from "@netlify/functions"
 import Airtable from 'airtable';
 import {UploadApiResponse, v2 as cloudinary} from 'cloudinary';
 
-const MAX_FILE_SIZE_IN_BYTES = 10 * 1000000; // 10 mb
+const MAX_FILE_SIZE_IN_BYTES = 5 * 1000000; // 5 mb
 
 const ERROR_BODY_MISSING_PARAM = JSON.stringify({error: "missingparam"});
 const ERROR_BODY_INVALID_PARAM = JSON.stringify({error: "invalidparam"});
@@ -26,7 +26,6 @@ const headers = (process.env.DEVMODE) ? {
 
 export default async (req: Request) => {
   const formData = await req.formData();
-  console.log(formData);
 
   const layoutBlob = formData.get('journallayout') as Blob;
   if (!layoutBlob) {
@@ -39,6 +38,7 @@ export default async (req: Request) => {
     console.error('Could not make an array buffer')
     return new Response(ERROR_BODY_INVALID_PARAM, { status: 400, headers })
   }
+
 
   if (arrayBuffer.byteLength > MAX_FILE_SIZE_IN_BYTES) {
     console.error(`The file is too large at ${arrayBuffer.byteLength} bytes`);
@@ -54,7 +54,7 @@ export default async (req: Request) => {
 
   try {
     const record = await addToAirtable(journalLayoutUrl, formData);
-    console.log('successful record:', record);
+    console.info(`record ${record.id} was saved successfully`);
     return new Response(
       SUCCESS,
       {
@@ -69,6 +69,7 @@ export default async (req: Request) => {
 
 async function uploadToCloudinary(byteArrayBuffer: ArrayBuffer): Promise<UploadApiResponse|undefined> {
   const nodeBuffer = Buffer.from(byteArrayBuffer);
+  console.info('Attempting to upload buffer of size', byteArrayBuffer.byteLength)
   return new Promise((resolve) => {
       cloudinary.uploader.upload_stream((error, uploadResult) => {
         return resolve(uploadResult);
