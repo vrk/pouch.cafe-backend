@@ -113,7 +113,7 @@ async function addToAirtable(journalLayoutUrl: string, formData: FormData) {
     'Email': email,
     'Description': desc,
     'Social': social,
-    "From": "web"
+    'From': 'web'
   };
   if (journalLayoutUrl) {
     newRecord['Journal Layout'] = [{ 'url': journalLayoutUrl } as any]
